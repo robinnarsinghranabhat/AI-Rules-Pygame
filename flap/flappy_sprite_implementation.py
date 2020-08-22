@@ -2,28 +2,23 @@
 ### Make Class level objects on what you want to work, like birds and walls and enemies
 ### Check for event in while loop, and modify/ draw object's internal state ..
 
-
 import pygame, sys
-from flappy_utils import Flappy, Pipes, check_collision, update_score
-
-
-def draw_floor():
-    screen.blit(floor_surface,(floor_x_pos,900))
-    screen.blit(floor_surface,(floor_x_pos + screen_width,900))
+from flappy_sprite_utils import Flappy, Pipes, Floor, check_collision, update_score
 
 def score_display(game_state):
+
     if game_state == 'main_game':
         score_surface = game_font.render(str(int(score)),True,(255,255,255))
         score_rect = score_surface.get_rect(center = (288,100))
         screen.blit(score_surface,score_rect)
     if game_state == 'game_over':
-        score_surface = game_font.render('Score: {}'.format(int(score)) ,True,(255,255,255))
-        score_rect = score_surface.get_rect(center = (288,100))
-        screen.blit(score_surface,score_rect)
+            score_surface = game_font.render('Score: {}'.format(int(score)) ,True,(255,255,255))
+            score_rect = score_surface.get_rect(center = (288,100))
+            screen.blit(score_surface,score_rect)
 
-        high_score_surface = game_font.render('High score: {}'.format(int(high_score)),True,(255,255,255))
-        high_score_rect = high_score_surface.get_rect(center = (288,850))
-        screen.blit(high_score_surface,high_score_rect)
+            high_score_surface = game_font.render('High score: {}'.format(int(high_score)),True,(255,255,255))
+            high_score_rect = high_score_surface.get_rect(center = (288,850))
+            screen.blit(high_score_surface,high_score_rect)
 
 pygame.mixer.pre_init(frequency = 44100, size = 16, channels = 1, buffer = 512)
 
@@ -44,9 +39,6 @@ high_score = 0
 bg_surface = pygame.image.load('assets/background-day.png').convert()
 bg_surface = pygame.transform.scale2x(bg_surface)
 
-floor_surface = pygame.image.load('assets/base.png').convert()
-floor_surface = pygame.transform.scale2x(floor_surface)
-floor_x_pos = 0
 
 game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.png').convert_alpha())
 game_over_rect = game_over_surface.get_rect(center = (288,512))
@@ -64,6 +56,8 @@ game_pipes = Pipes(screen_width, screen_height)
 SPAWNPIPE = pygame.USEREVENT
 pygame.time.set_timer(SPAWNPIPE,1200)
 
+floor = Floor(screen_width, screen_height)
+
 while True:
     ## Inside this for loop, we modify our workable objects according to events that are taking place
     for event in pygame.event.get():
@@ -72,13 +66,11 @@ while True:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and game_active:
-                bird.bird_movement = 0
-                bird.bird_movement -= 10
+                bird.update(-10, event.key)
                 flap_sound.play()
 
             if event.key == pygame.K_DOWN and game_active:
-                bird.bird_movement = 0
-                bird.bird_movement += 5
+                bird.update(10, event.key)
                 flap_sound.play()
 
 
@@ -87,7 +79,6 @@ while True:
                 game_active = True
                 game_pipes.clear_pipes()
                 bird.bird_rect.center = (100,512)
-                bird.bird_movement = 0
                 flap_sound.play()
 
 
@@ -110,46 +101,35 @@ while True:
     screen.blit(bg_surface,(0,0))
 
     if game_active:
-        # At each frame, pull bird down ever slightly
-        bird.bird_movement += gravity
-
-        ## Till now, bird_movement holds combined effect of gravity and if space pressed, that of upward motion
-        bird.bird_rect.centery += bird.bird_movement
-        bird.draw_bird(screen)
-
-        ## reset .. so that, in next frame, when you press space,
-        ## instead of goiing up by 4, it will go up by .. 8 ..
-        ## and in next one, by 12 .. and 16 and ..
-
+        bird.update(gravity)
+        bird.draw(screen)
 
         game_active = check_collision(game_pipes.pipe_list, bird.bird_rect, death_sound)
 
-        # Pipes
-        game_pipes.move_pipes()
-        game_pipes.draw_pipes(screen)
+        ## Pipes
+        game_pipes.update()
+        game_pipes.draw(screen)
 
-        score += 0.01
-        score_display('main_game')
-        score_sound_countdown -= 1
-        if score_sound_countdown <= 0:
-            score_sound.play()
-            score_sound_countdown = 100
+        ## FLoor
+        floor.update()
+        floor.draw(screen)
+
+
+        try:
+            score += 0.01
+            score_display('main_game')
+            score_sound_countdown -= 1
+            if score_sound_countdown <= 0:
+                score_sound.play()
+                score_sound_countdown = 100
+        except:
+            import pdb; pdb.set_trace()
     else:
         screen.blit(game_over_surface,game_over_rect)
         high_score = update_score(score,high_score)
         score_display('game_over')
 
-
-    # Floor
-    floor_x_pos -= 1
-    draw_floor()
-    if floor_x_pos <= -screen_width:
-        floor_x_pos = 0
-
-
     pygame.display.update()
-
     # new_array = pygame.surfarray.pixels3d(screen)
-    # import pdb; pdb.set_trace()
 
     clock.tick(60)
