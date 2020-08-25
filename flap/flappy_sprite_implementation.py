@@ -3,7 +3,7 @@
 ### Check for event in while loop, and modify/ draw object's internal state ..
 
 import pygame, sys
-from flappy_sprite_utils import Flappy, Pipes, Floor, check_collision, update_score
+from flappy_sprite_utils import Flappy, Pipe, Floor, check_collision, update_score
 
 def score_display(game_state):
 
@@ -48,16 +48,27 @@ death_sound = pygame.mixer.Sound('sound/sfx_hit.wav')
 score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
 score_sound_countdown = 100
 
+
 bird = Flappy()
 BIRDFLAP = pygame.USEREVENT + 1
 pygame.time.set_timer(BIRDFLAP,200)
 
-game_pipes = Pipes(screen_width, screen_height)
+all_sprites = pygame.sprite.Group()
+all_sprites.add(bird)
+
+game_pipes = pygame.sprite.Group( [
+    Pipe( screen_width , screen_height   ) ,
+    Pipe( screen_width , screen_height , screen_width/2  ) ,
+    Pipe( screen_width , screen_height , screen_width )
+    ] )
+
+for i in game_pipes:
+    all_sprites.add(i)
+
 SPAWNPIPE = pygame.USEREVENT
 pygame.time.set_timer(SPAWNPIPE,1200)
 
 floor = Floor(screen_width, screen_height)
-
 while True:
     ## Inside this for loop, we modify our workable objects according to events that are taking place
     for event in pygame.event.get():
@@ -77,14 +88,10 @@ while True:
             ##  RESTART GAME HERE AFTER game_active = False, bird dies ..
             if event.key == pygame.K_SPACE and game_active == False:
                 game_active = True
-                game_pipes.clear_pipes()
-                bird.bird_rect.center = (100,512)
+                # game_pipes.clear_pipes()
+                bird.rect.center = (100,512)
                 flap_sound.play()
 
-
-        ## at every 1200 mil, we add top and bottom pipes to pipelist ..
-        if event.type == SPAWNPIPE:
-            game_pipes.add_pipes()
 
         ## at every 200 mil .. alternate animation bird between frame 1 ,2 ,3 .. to show flapping ..
         if event.type == BIRDFLAP:
@@ -102,18 +109,16 @@ while True:
 
     if game_active:
         bird.update(gravity)
-        bird.draw(screen)
+        # bird.draw(screen)
 
-        game_active = check_collision(game_pipes.pipe_list, bird.bird_rect, death_sound)
+        game_active = check_collision( game_pipes, bird  )
 
         ## Pipes
         game_pipes.update()
-        game_pipes.draw(screen)
+        # game_pipes.draw(screen)
 
         ## FLoor
         floor.update()
-        floor.draw(screen)
-
 
         try:
             score += 0.01
@@ -128,6 +133,11 @@ while True:
         screen.blit(game_over_surface,game_over_rect)
         high_score = update_score(score,high_score)
         score_display('game_over')
+
+    for entity in all_sprites:
+        screen.blit(entity.image, entity.rect)
+
+    floor.draw(screen)
 
     pygame.display.update()
     # new_array = pygame.surfarray.pixels3d(screen)
