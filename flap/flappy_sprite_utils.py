@@ -125,7 +125,7 @@ class Pipe(pygame.sprite.Sprite):
 
         self.image.blit( lower_pipe , ( 0 , self.screen_height ))
         self.image.blit( upper_pipe , ( 0 , self.screen_height - self.gap -  upper_pipe.get_height() ))
-        # import pdb; pdb.set_trace()
+
         self.rect = self.image.get_rect()
 
         self.rect.centerx += self.offset
