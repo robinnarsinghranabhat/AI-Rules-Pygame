@@ -19,18 +19,18 @@ def update_score(score, high_score):
     return high_score
 
 def check_collision(pipe_group, bird):
-
-    # if pygame.sprite.spritecollide( bird, pipe_group , True):
-    #     return False
-    #
-    # if bird.rect.top <= -100 or bird.rect.bottom >= 900:
-    #     return False
-
+    for pipe in pipe_group:
+        if pipe.lower_pipe_rect.centerx > 200:
+            continue
+        if pipe.lower_pipe_rect.colliderect(bird.rect) or pipe.upper_pipe_rect.colliderect(bird.rect) :
+            return False
+    if bird.rect.top <= -100 or bird.rect.bottom >= 900:
+        return False
     return True
-
 
 class Flappy(pygame.sprite.Sprite):
     def __init__(self):
+
         pygame.sprite.Sprite.__init__(self)
         self.bird_index = 0
         self.birds = self._load_birds()
@@ -58,7 +58,6 @@ class Flappy(pygame.sprite.Sprite):
     #     screen.blit( rotated_bird,self.rect )
 
     def update(self,change_y, pressed_key= None):
-
         ## this update happens anyways due to gravity
         self.tot_change_y += change_y
         if pressed_key == pygame.K_UP or pressed_key == pygame.K_DOWN:
@@ -93,46 +92,43 @@ class Pipe(pygame.sprite.Sprite):
 
     def __init__(self, screen_width, screen_height, offset = 0):
         pygame.sprite.Sprite.__init__(self)
+
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         self.gap = 300
         self.offset_gap = 30
         self.offset = offset
-        # self.pipe_height = [400,600,800]
-        # self.pipe_height = random.randint(400, 800)
-
-        ## it needs to know where to draw on screen
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self.offset_dict = { 0 : 0 ,
+                             1 : self.screen_width // 2 ,
+                             2 : self.screen_width }
         self._load_pipe()
 
-    def _get_pipe_range(self):
-
-        img_center = self.image.get_height() // 2
-        # rem_gap = self.image.get_height() - (self.pipe_image_height * 2 - self.gap )
-        return random.randint(  img_center  - 600 , img_center - 200   )
+    def _get_random_coord(self):
+        return random.randint( 400, 800  )
 
     def _load_pipe(self):
-        lower_pipe = pygame.transform.scale2x( pygame.image.load('assets/pipe-green.png') )
-        upper_pipe = pygame.transform.rotate( lower_pipe , 180 )
+        self.lower_pipe = pygame.transform.scale2x( pygame.image.load('assets/pipe-green.png') )
+        self.upper_pipe = pygame.transform.rotate( self.lower_pipe , 180 )
 
-        self.pipe_image_width = lower_pipe.get_width()
-        self.pipe_image_height = lower_pipe.get_height()
+        self._update_rect( self.offset_dict[self.offset] )
 
-        tot_img_height = self.screen_height + self.pipe_image_height
-        self.image = pygame.Surface( ( self.pipe_image_width , tot_img_height  ) , pygame.SRCALPHA, 32 )
+        self.pipe_image_width = self.lower_pipe.get_width()
+        self.pipe_image_height = self.lower_pipe.get_height
 
-        # random_pipe_pos = random.choice(self.pipe_height)
-        random_pipe_pos = self._get_pipe_range()
+    def _update_rect(self, off_val):
+        self.lower_pipe_rect = self.lower_pipe.get_rect( midtop = ( 700 + off_val , self._get_random_coord() ) )
+        self.upper_pipe_rect = self.upper_pipe.get_rect( midbottom = ( 700 + off_val , self.lower_pipe_rect.top - self.gap ) )
 
-        self.image.blit( lower_pipe , ( 0 , self.screen_height ))
-        self.image.blit( upper_pipe , ( 0 , self.screen_height - self.gap -  upper_pipe.get_height() ))
+    def reinitialize(self, off_val):
+        self.lower_pipe_rect = self.lower_pipe.get_rect( midtop = ( 700 + self.offset_dict[off_val] , self._get_random_coord() ) )
+        self.upper_pipe_rect = self.upper_pipe.get_rect( midbottom = ( 700 + self.offset_dict[off_val] , self.lower_pipe_rect.top - self.gap ) )
 
-        self.rect = self.image.get_rect()
-
-        self.rect.centerx += self.offset
-        self.rect.centery = self._get_pipe_range()
+    def __str__(self):
+        return 'Pipe'
 
     def update(self):
-        self.rect.centerx -= 5
-        if self.rect.centerx <= -self.pipe_image_width // 2:
-            self.rect.centerx =  self.screen_width + self.pipe_image_width // 2 + self.screen_width // 2
-            self.rect.centery =  self._get_pipe_range()
+        self.lower_pipe_rect.centerx -= 5
+        self.upper_pipe_rect.centerx -= 5
+
+        if self.lower_pipe_rect.centerx <= -self.pipe_image_width + 5 :
+            self._update_rect( self.pipe_image_width // 2 )
