@@ -10,13 +10,13 @@ from pygame.locals import (
     K_RIGHT,
     K_ESCAPE,
     KEYDOWN,
-    QUIT,
-)
+    QUIT )
 
 def update_score(score, high_score):
     if score > high_score:
         high_score = score
     return high_score
+
 
 def check_collision(pipe_group, bird):
     for pipe in pipe_group:
@@ -27,6 +27,7 @@ def check_collision(pipe_group, bird):
     if bird.rect.top <= -100 or bird.rect.bottom >= 900:
         return False
     return True
+
 
 class Flappy(pygame.sprite.Sprite):
     def __init__(self):
@@ -71,22 +72,27 @@ class Floor(pygame.sprite.Sprite):
     def __init__(self, screen_width, screen_height):
         pygame.sprite.Sprite.__init__(self)
         self.image = self._load_floor()
+        self.rect1 = self.image.get_rect( topleft = ( 0, 900 ) )
+        self.rect2 = self.image.get_rect( topleft = ( self.image.get_width() , 900  ) )
         self.floor_x_pos = 0
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+    def __str__(self):
+        return 'Floor'
 
     def _load_floor(self):
         floor_surface = pygame.image.load('assets/base.png').convert()
         return pygame.transform.scale2x(floor_surface)
 
-    def draw(self,screen):
-        screen.blit( self.image,(self.floor_x_pos,900) )
-        screen.blit( self.image,(self.floor_x_pos + self.screen_width,900) )
-
     def update(self):
-        self.floor_x_pos -= 1
-        if self.floor_x_pos <= -self.screen_width:
-            self.floor_x_pos = 0
+        self.rect1.centerx -= 1
+        self.rect2.centerx -= 1
+
+        if self.rect1.right <= 0:
+            self.rect1.left = 0
+            self.rect2.left = self.image.get_width()
+
 
 class Pipe(pygame.sprite.Sprite):
 

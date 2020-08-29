@@ -35,6 +35,8 @@ game_active = True
 score = 0
 high_score = 0
 
+bg_surface = pygame.image.load('assets/background-day.png').convert()
+bg_surface = pygame.transform.scale2x(bg_surface)
 
 game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.png').convert_alpha())
 game_over_rect = game_over_surface.get_rect(center = (288,512))
@@ -44,56 +46,26 @@ death_sound = pygame.mixer.Sound('sound/sfx_hit.wav')
 score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
 score_sound_countdown = 100
 
+all_sprites = pygame.sprite.OrderedUpdates()
 
+bird = Flappy()
 BIRDFLAP = pygame.USEREVENT + 1
-pygame.time.set_timer(BIRDFLAP,200)
-
-all_sprites = pygame.sprite.Group()
+pygame.time.set_timer( BIRDFLAP , 200 )
 all_sprites.add(bird)
 
-game_pipes = pygame.sprite.Group( [
+game_pipes = pygame.sprite.OrderedUpdates( [
     Pipe( screen_width , screen_height  , 0 ) ,
     Pipe( screen_width , screen_height ,  1 ) ,
     Pipe( screen_width , screen_height , 2 )
     ] )
-
 for i in game_pipes:
     all_sprites.add(i)
 
-SPAWNPIPE = pygame.USEREVENT
-pygame.time.set_timer(SPAWNPIPE,1200)
-
-
-class Flappy_Main(object):
-
-    def __init__( self ):
-
-        self.bird = Flappy()
-        self.game_pipes = pygame.sprite.Group( [
-            Pipe( screen_width , screen_height  , 0 ) ,
-            Pipe( screen_width , screen_height ,  1 ) ,
-            Pipe( screen_width , screen_height , 2 )
-            ] )
-
-
-    def _load_bg(self):
-        bg_surface = pygame.image.load('assets/background-day.png').convert()
-        self.bg_surface = pygame.transform.scale2x(bg_surface)
-
-    def _load_game_over(self):
-
-
-
-
-
-
-
-
-
-
-
-
 floor = Floor(screen_width, screen_height)
+SPAWNPIPE = pygame.USEREVENT
+pygame.time.set_timer( SPAWNPIPE , 1200 )
+all_sprites.add(floor)
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -132,14 +104,20 @@ while True:
         game_pipes.update()
         floor.update()
 
-
+        # import pdb; pdb.set_trace()
         for entity in all_sprites:
-            if entity.__str__() == 'Pipe':
+            if entity.__str__() == 'Floor':
+                screen.blit( entity.image,  entity.rect1  )
+                screen.blit( entity.image ,  entity.rect2 )
+
+            elif entity.__str__() == 'Pipe':
                 screen.blit( entity.lower_pipe ,  entity.lower_pipe_rect  )
                 screen.blit( entity.upper_pipe ,  entity.upper_pipe_rect  )
+
             else:
-                screen.blit(entity.image, entity.rect)
-        floor.draw(screen)
+                screen.blit( entity.image, entity.rect )
+
+        # floor.draw(screen)
         ## DISPLAY PART END ##
         try:
             score += 0.01
