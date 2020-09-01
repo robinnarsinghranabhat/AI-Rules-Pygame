@@ -5,28 +5,10 @@
 import pygame, sys
 from flappy_sprite_utils import Flappy, Floor, check_collision, update_score, Pipe
 
-def score_display(game_state):
-    if game_state == 'main_game':
-        score_surface = game_font.render(str(int(score)),True,(255,255,255))
-        score_rect = score_surface.get_rect(center = (288,100))
-        screen.blit(score_surface,score_rect)
-    if game_state == 'game_over':
-            score_surface = game_font.render('Score: {}'.format(int(score)) ,True,(255,255,255))
-            score_rect = score_surface.get_rect(center = (288,100))
-            screen.blit(score_surface,score_rect)
-
-            high_score_surface = game_font.render('High score: {}'.format(int(high_score)),True,(255,255,255))
-            high_score_rect = high_score_surface.get_rect(center = (288,850))
-            screen.blit(high_score_surface,high_score_rect)
-
-pygame.mixer.pre_init(frequency = 44100, size = 16, channels = 1, buffer = 512)
-
 ## MAIN CODE
 pygame.init()
-
 screen_width = 576
 screen_height = 1024
-screen = pygame.display.set_mode((  screen_width  ,screen_height))
 
 clock = pygame.time.Clock()
 game_font = pygame.font.Font('04B_19.TTF',40)
@@ -35,52 +17,74 @@ game_active = True
 score = 0
 high_score = 0
 
-
 game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.png').convert_alpha())
 game_over_rect = game_over_surface.get_rect(center = (288,512))
-
-flap_sound = pygame.mixer.Sound('sound/sfx_wing.wav')
-death_sound = pygame.mixer.Sound('sound/sfx_hit.wav')
-score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
-score_sound_countdown = 100
-
-
-BIRDFLAP = pygame.USEREVENT + 1
-pygame.time.set_timer(BIRDFLAP,200)
-
-all_sprites = pygame.sprite.Group()
-all_sprites.add(bird)
-
-game_pipes = pygame.sprite.Group( [
-    Pipe( screen_width , screen_height  , 0 ) ,
-    Pipe( screen_width , screen_height ,  1 ) ,
-    Pipe( screen_width , screen_height , 2 )
-    ] )
-
-for i in game_pipes:
-    all_sprites.add(i)
-
-SPAWNPIPE = pygame.USEREVENT
-pygame.time.set_timer(SPAWNPIPE,1200)
 
 
 class Flappy_Main(object):
 
-    def __init__( self ):
+    def __init__( self , screen_width , screen_height ):
 
+        self.screen = pygame.display.set_mode((  screen_width  ,screen_height))
+        self.all_sprites = pygame.sprite.OrderedUpdates()
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+
+        self._init_bird()
+        self._init_pipes()
+        self._init_floor()
+        self._load_bg()
+
+    def _init_bird(self):
         self.bird = Flappy()
+        self.BIRDFLAP = pygame.USEREVENT + 1
+        pygame.time.set_timer( self.BIRDFLAP , 200 )
+        self.all_sprites.add( self.bird )
+
+
+    def _init_pipes(self):
         self.game_pipes = pygame.sprite.Group( [
-            Pipe( screen_width , screen_height  , 0 ) ,
-            Pipe( screen_width , screen_height ,  1 ) ,
-            Pipe( screen_width , screen_height , 2 )
+            Pipe( self.screen_width , self.screen_height  , 0 ) ,
+            Pipe( self.screen_width , self.screen_height ,  1 ) ,
+            Pipe( self.screen_width , self.screen_height , 2 )
             ] )
+
+        for i in self.game_pipes:
+            self.all_sprites.add(i)
+
+    def _init_floor(self):
+        self.floor = Floor(screen_width, screen_height)
+        self.SPAWNPIPE = pygame.USEREVENT
+        pygame.time.set_timer( self.SPAWNPIPE , 1200 )
+        self.all_sprites.add( self.floor)
 
 
     def _load_bg(self):
         bg_surface = pygame.image.load('assets/background-day.png').convert()
         self.bg_surface = pygame.transform.scale2x(bg_surface)
+        self.screen.blit( self.bg_surface , (0,0) )
+
+
+    def update_screen(self):
+        for entity in self.all_sprites:
+            if entity.__str__() == 'Floor':
+                self.screen.blit( entity.image,  entity.rect1  )
+                self.screen.blit( entity.image ,  entity.rect2 )
+
+            elif entity.__str__() == 'Pipe':
+                self.screen.blit( entity.lower_pipe ,  entity.lower_pipe_rect  )
+                screen.blit( entity.upper_pipe ,  entity.upper_pipe_rect  )
+
+            else:
+                self.screen.blit( entity.image, entity.rect )
+
+
+
+
+
 
     def _load_game_over(self):
+
 
 
 
