@@ -21,6 +21,7 @@ game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.p
 game_over_rect = game_over_surface.get_rect(center = (288,512))
 
 
+## MAIN GAME CLASS TO GET UPDATED FRAMES EVERY SECOND, ALONG WITH REWARDS
 class Flappy_Main(object):
 
     def __init__( self , screen_width , screen_height ):
