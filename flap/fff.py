@@ -30,7 +30,7 @@ screen = pygame.display.set_mode((  screen_width  ,screen_height))
 
 clock = pygame.time.Clock()
 game_font = pygame.font.Font('04B_19.TTF',40)
-gravity = 0.3
+gravity = 0.4
 game_active = True
 score = 0
 high_score = 0
@@ -62,8 +62,7 @@ for i in game_pipes:
     all_sprites.add(i)
 
 floor = Floor(screen_width, screen_height)
-SPAWNPIPE = pygame.USEREVENT
-pygame.time.set_timer( SPAWNPIPE , 1200 )
+
 all_sprites.add(floor)
 
 while True:
@@ -135,6 +134,7 @@ while True:
 
 
     pygame.display.update()
+    clock.tick(40)
     # new_array = pygame.surfarray.pixels3d(screen)
 
-    clock.tick(60)
+    #
