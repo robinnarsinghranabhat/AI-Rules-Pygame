@@ -19,7 +19,7 @@ class Flappy_Main(object):
         self.gravity = 0.3
         self.fps = 60
         self.action_dict = {}
-        self.display_screen = True
+        self.display_screen = False
 
         ## load mutable game variables ##
         self.init()
@@ -130,7 +130,7 @@ class Flappy_Main(object):
             else:
                 self.screen.blit( entity.image, entity.rect )
         if self.display_screen:
-            pygame.display.flip()
+            pygame.display.update()
 
     def get_screen_rbg(self):
         # return pygame.surfarray.pixels3d(self.screen)
