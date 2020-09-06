@@ -84,13 +84,14 @@ class Flappy_Main(object):
                     self.bird.bird_index += 1
                 else:
                     self.bird.bird_index = 0
-                # self.bird.bird_animation()
+                self.bird.bird_animation()
 
 
 
     def step(self, action):
         ## 0 -> up , 1 -> down , 2 -> nothing
-        # self.screen.unlock()
+
+        self._handle_events()
         if action == 0 :
             self.bird.update( - 10 , pygame.K_UP )
         elif action == 1 :
@@ -135,5 +136,4 @@ class Flappy_Main(object):
     def get_screen_rbg(self):
         # return pygame.surfarray.pixels3d(self.screen)
         ## same thing as this
-        out =  pygame.surfarray.array3d( pygame.display.get_surface()).astype(np.uint8)
-        return out
+        return pygame.surfarray.array3d( pygame.display.get_surface()).astype(np.uint8)
