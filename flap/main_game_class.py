@@ -10,16 +10,18 @@ from flappy_sprite_utils import Flappy, Floor, check_collision, update_score, Pi
 ## MAIN GAME CLASS TO GET UPDATED FRAMES EVERY SECOND, ALONG WITH REWARDS
 class Flappy_Main(object):
 
-    def __init__( self , screen_width = 576 , screen_height = 1024 ):
+    def __init__( self , screen_width = 576 , screen_height = 1024, play_human = True , display_screen = True  ):
 
         self.screen_width = screen_width
         self.screen_height = screen_height
 
         ## load immutable game variables ##
         self.gravity = 0.3
+        self.play_human = play_human
         self.fps = 60
         self.action_dict = {}
-        self.display_screen = False
+        self.display_screen = display_screen
+        self.game_active = True
 
         ## load mutable game variables ##
         self.init()
@@ -73,7 +75,7 @@ class Flappy_Main(object):
         self.bg_surface = pygame.transform.scale2x(bg_surface)
         self.screen.blit( self.bg_surface , (0,0) )
 
-    def _handle_events(self):
+    def _handle_simp_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -90,31 +92,75 @@ class Flappy_Main(object):
 
     def step(self, action):
         ## 0 -> up , 1 -> down , 2 -> nothing
-
-        self._handle_events()
-        if action == 0 :
-            self.bird.update( - 10 , pygame.K_UP )
-        elif action == 1 :
-            self.bird.update( 10 , pygame.K_DOWN )
-
         self.clock.tick(self.fps)
-        # APART FROM THESE ACTIONS< NOTHING MODIFYING THE BIRD !!!
 
-        game_active = check_collision( self.game_pipes , self.bird )
+        ## USEFUL FOR
+        ## 1) GENERATING SUPERVISED LEARNING DATEST
+        ## 2) COMPARING HUMAN PLAY AGAINST HOW AI PLAYS
+        if self.play_human :
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-        if game_active:
-            self.frame_count += 1
-            self.game_pipes.update()
-            self.floor.update()
-            self.update_screen()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP and self.game_active:
+                        self.bird.update(-10, event.key)
 
-            # if self.display_screen:
-            #     pygame.display.update()
-            return self.get_screen_rbg() , self.frame_count , True
+                    if event.key == pygame.K_DOWN and self.game_active:
+                        self.bird.update(10, event.key)
+
+                    if event.key == pygame.K_UP and self.game_active == False:
+                        self.game_active = True
+                        for ind, pipe in enumerate( self.game_pipes ):
+                            self.pipe.reinitialize(ind)
+                        self.bird.rect.center = (100,512)
+
+                if event.type == self.BIRDFLAP:
+                    if self.bird.bird_index < 2:
+                        self.bird.bird_index += 1
+                    else:
+                        self.bird.bird_index = 0
+                    self.bird.bird_animation()
+
+            if self.game_active:
+                self.frame_count += 1
+                self.bird.update( self.gravity )
+                self.game_active = check_collision( self.game_pipes , self.bird )
+
+                self.game_pipes.update()
+                self.floor.update()
+                self.update_screen()
+                pygame.display.update()
+
+                return self.get_screen_rbg() , self.frame_count , True
+
+            else:
+                pygame.quit()
+                sys.exit()
 
         else:
-            self._reset()
-            return None, None, False
+            ## AI AGENT PLAYING THE FREAKING GAME
+
+            self._handle_simp_event()
+            if action == 0 :
+                self.bird.update( - 10 , pygame.K_UP )
+            elif action == 1 :
+                self.bird.update( 10 , pygame.K_DOWN )
+
+            self.game_active = check_collision( self.game_pipes , self.bird )
+
+            if self.game_active:
+                self.frame_count += 1
+                self.game_pipes.update()
+                self.floor.update()
+                self.update_screen()
+
+                return self.get_screen_rbg() , self.frame_count , True
+
+            else:
+                self._reset()
+                return None, None, False
 
     def update_screen(self):
 
@@ -134,6 +180,4 @@ class Flappy_Main(object):
             pygame.display.update()
 
     def get_screen_rbg(self):
-        # return pygame.surfarray.pixels3d(self.screen)
-        ## same thing as this
         return pygame.surfarray.array3d( pygame.display.get_surface()).astype(np.uint8)

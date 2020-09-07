@@ -26,7 +26,7 @@ while True:
     game_no += 1
     print('Starting New game ...')
     tot_rew = 0
-    for i in range(2000):
+    for i in range(200):
         action = random.choice([0,1,2])
         next_state, reward, active = env.step( action )
 
