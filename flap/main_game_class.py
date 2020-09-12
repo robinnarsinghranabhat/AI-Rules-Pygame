@@ -4,6 +4,13 @@
 
 import pygame, sys
 import numpy as np
+# import os
+
+
+# os.putenv('SDL_VIDEODRIVER', 'fbcon')
+# pygame.display.init()
+
+
 
 from flappy_sprite_utils import Flappy, Floor, check_collision, update_score, Pipe
 
@@ -47,8 +54,9 @@ class Flappy_Main(object):
 
 
     def _reset(self):
-        self._start()
         self.init()
+        self._start()
+        return self.get_screen_rbg()
 
     def _init_bird(self):
         self.bird = Flappy()
@@ -141,7 +149,6 @@ class Flappy_Main(object):
 
         else:
             ## AI AGENT PLAYING THE FREAKING GAME
-
             self._handle_simp_event()
             if action == 0 :
                 self.bird.update( - 10 , pygame.K_UP )
@@ -156,11 +163,14 @@ class Flappy_Main(object):
                 self.floor.update()
                 self.update_screen()
 
-                return self.get_screen_rbg() , self.frame_count , True
+                return self.get_screen_rbg() , self.frame_count , False
 
             else:
                 self._reset()
-                return None, None, False
+                return None, None, True
+
+    def close(self):
+        pygame.quit()
 
     def update_screen(self):
 
