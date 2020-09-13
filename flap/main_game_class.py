@@ -17,7 +17,7 @@ from flappy_sprite_utils import Flappy, Floor, check_collision, update_score, Pi
 ## MAIN GAME CLASS TO GET UPDATED FRAMES EVERY SECOND, ALONG WITH REWARDS
 class Flappy_Main(object):
 
-    def __init__( self , screen_width = 576 , screen_height = 1024, play_human = True , display_screen = True  ):
+    def __init__( self , screen_width = 576 , screen_height = 1024, play_human = True , display_screen = True , state_vec = True ):
 
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -29,6 +29,7 @@ class Flappy_Main(object):
         self.action_dict = {}
         self.display_screen = display_screen
         self.game_active = True
+        self.easy_mode = state_vec
 
         ## load mutable game variables ##
         self.init()
@@ -53,10 +54,43 @@ class Flappy_Main(object):
         self.clock = pygame.time.Clock()
 
 
+    def get_state_vector(self):
+
+        bird_coords = [ self.bird.rect.left,
+                        self.bird.rect.top,
+                    ] + list( self.bird.rect.size )
+
+        pipe_coords = []
+        for pipe in self.game_pipes:
+
+            lower_pipe_coords  = [
+                pipe.lower_pipe_rect.right,
+                pipe.lower_pipe_rect.top,
+                    ] + list( pipe.lower_pipe_rect.size )
+
+            upper_pipe_coords  = [
+                pipe.upper_pipe_rect.right,
+                pipe.upper_pipe_rect.bottom,
+                    ] + list( pipe.upper_pipe_rect.size )
+
+            pipe_coords.extend( lower_pipe_coords + upper_pipe_coords )
+
+        ## normalize vectors
+        state_vector = bird_coords + pipe_coords
+        p_w_ = np.array( state_vector[0::2] ) / self.screen_width
+        p_h_ = np.array( state_vector[1::2] ) / self.screen_height
+
+        return np.concatenate( (p_w_ , p_h_) )
+
+
+
     def _reset(self):
         self.init()
         self._start()
-        return self.get_screen_rbg()
+        if self.easy_mode:
+            return self.get_state_vector()
+        else:
+            return self.get_screen_rbg()
 
     def _init_bird(self):
         self.bird = Flappy()
@@ -89,12 +123,12 @@ class Flappy_Main(object):
                 pygame.quit()
                 sys.exit()
 
-            if event.type == self.BIRDFLAP:
-                if self.bird.bird_index < 2:
-                    self.bird.bird_index += 1
-                else:
-                    self.bird.bird_index = 0
-                self.bird.bird_animation()
+            # if event.type == self.BIRDFLAP:
+            #     if self.bird.bird_index < 2:
+            #         self.bird.bird_index += 1
+            #     else:
+            #         self.bird.bird_index = 0
+            #     self.bird.bird_animation()
 
 
 
@@ -141,7 +175,7 @@ class Flappy_Main(object):
                 self.update_screen()
                 pygame.display.update()
 
-                return self.get_screen_rbg() , self.frame_count , True
+                # return self.get_screen_rbg() , self.frame_count , True
 
             else:
                 pygame.quit()
@@ -162,8 +196,10 @@ class Flappy_Main(object):
                 self.game_pipes.update()
                 self.floor.update()
                 self.update_screen()
-
-                return self.get_screen_rbg() , self.frame_count , False
+                if self.easy_mode:
+                    return self.get_state_vector() , self.frame_count , False
+                else:
+                    return self.get_screen_rbg() , self.frame_count , False
 
             else:
                 self._reset()
