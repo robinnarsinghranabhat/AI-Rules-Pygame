@@ -30,7 +30,7 @@ screen = pygame.display.set_mode((  screen_width  ,screen_height))
 
 clock = pygame.time.Clock()
 game_font = pygame.font.Font('04B_19.TTF',40)
-gravity = 0.3
+gravity = 0.4
 game_active = True
 score = 0
 high_score = 0
@@ -46,27 +46,25 @@ death_sound = pygame.mixer.Sound('sound/sfx_hit.wav')
 score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
 score_sound_countdown = 100
 
+all_sprites = pygame.sprite.OrderedUpdates()
 
 bird = Flappy()
 BIRDFLAP = pygame.USEREVENT + 1
-pygame.time.set_timer(BIRDFLAP,200)
-
-all_sprites = pygame.sprite.Group()
+pygame.time.set_timer( BIRDFLAP , 200 )
 all_sprites.add(bird)
 
-game_pipes = pygame.sprite.Group( [
+game_pipes = pygame.sprite.OrderedUpdates( [
     Pipe( screen_width , screen_height  , 0 ) ,
     Pipe( screen_width , screen_height ,  1 ) ,
     Pipe( screen_width , screen_height , 2 )
     ] )
-
 for i in game_pipes:
     all_sprites.add(i)
 
-SPAWNPIPE = pygame.USEREVENT
-pygame.time.set_timer(SPAWNPIPE,1200)
-
 floor = Floor(screen_width, screen_height)
+
+all_sprites.add(floor)
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -105,14 +103,20 @@ while True:
         game_pipes.update()
         floor.update()
 
-
+        # import pdb; pdb.set_trace()
         for entity in all_sprites:
-            if entity.__str__() == 'Pipe':
+            if entity.__str__() == 'Floor':
+                screen.blit( entity.image,  entity.rect1  )
+                screen.blit( entity.image ,  entity.rect2 )
+
+            elif entity.__str__() == 'Pipe':
                 screen.blit( entity.lower_pipe ,  entity.lower_pipe_rect  )
                 screen.blit( entity.upper_pipe ,  entity.upper_pipe_rect  )
+
             else:
-                screen.blit(entity.image, entity.rect)
-        floor.draw(screen)
+                screen.blit( entity.image, entity.rect )
+
+        # floor.draw(screen)
         ## DISPLAY PART END ##
         try:
             score += 0.01
@@ -130,6 +134,7 @@ while True:
 
 
     pygame.display.update()
+    clock.tick(40)
     # new_array = pygame.surfarray.pixels3d(screen)
 
-    clock.tick(60)
+    #
